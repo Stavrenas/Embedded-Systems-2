@@ -12,7 +12,7 @@
 #include <sys/types.h>
 
 int elementsAdded = 0;
-
+int elementsLeft = QUEUESIZE;
 char newline[] = {'\n'};
 
 
