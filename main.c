@@ -68,26 +68,26 @@ void main(){
         if(end_10secs > quantum ){
             start_10secs=tic();
 
-        MacAddress *macAddress;
-        macAddress = (MacAddress *)malloc(ELEMENTS * sizeof(MacAddress));
+        MacAddress *macAddress = (MacAddress *)malloc( sizeof(MacAddress));
 
         returnAddress(address, ADDRESSES);
 
         macAddress->insertTime = tic();
         macAddress->isNear = false;
         macAddress->address = address;
-        if (fifo->full)
+
+        while (fifo->full)
         {
-            printf("Producer: queue FULL.\n");
+            //printf("Producer: queue FULL.\n");
             //pthread_cond_wait(fifo->notFull, fifo->mut);
-            exit(55);
         }
+
         queueAdd(fifo, macAddress);
 
             //printf("%f secs have elapsed.\n",sec);
             //printf("Covid test is %s\n",covidTest() ? "positive" : "negative");
             
-        printf("Addresses: %d\n",*ADDRESSES);
+        //printf("Addresses: %d\n",*ADDRESSES);
         }
     
     }

@@ -11,8 +11,6 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
-
-int elementsLeft = ELEMENTS;
 int elementsAdded = 0;
 
 char newline[] = {'\n'};
@@ -210,24 +208,21 @@ void *producer(void *q)
     int i;
     fifo = (queue *)q;
 
-    MacAddress *macAddress;
-    macAddress = (MacAddress *)malloc(ELEMENTS * sizeof(MacAddress));
+    MacAddress *macAddress = (MacAddress *)malloc(sizeof(MacAddress));
 
-    for (i = 1; elementsAdded <= ELEMENTS; i++)
+    pthread_mutex_lock(fifo->mut);
+    (macAddress+ i)->insertTime = tic();
+    (macAddress + i)->isNear = false;
+    elementsAdded++;
+    while (fifo->full)
     {
-        pthread_mutex_lock(fifo->mut);
-        (macAddress+ i)->insertTime = tic();
-        (macAddress + i)->isNear = false;
-        elementsAdded++;
-        while (fifo->full)
-        {
-            printf("Producer: queue FULL.\n");
-            pthread_cond_wait(fifo->notFull, fifo->mut);
-        }
-        queueAdd(fifo, (macAddress + i));
-        pthread_mutex_unlock(fifo->mut);
-        pthread_cond_signal(fifo->notEmpty);
+        printf("Producer: queue FULL.\n");
+        pthread_cond_wait(fifo->notFull, fifo->mut);
     }
+    queueAdd(fifo, (macAddress + i));
+    pthread_mutex_unlock(fifo->mut);
+    pthread_cond_signal(fifo->notEmpty);
+    
     return (NULL);
 }
 

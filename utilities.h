@@ -4,11 +4,12 @@
 #include <stdbool.h>
 #include <sys/time.h>
 
-#define QUEUESIZE 1000
+#define QUEUESIZE 120
 #define POSITIVE_PROB 2     //Probability of the test being positive (%) 
 #define NEW_MAC 25         //Probability of a new mac address being added (%) 
 #define MAC_LENGTH 17
-#define ELEMENTS 20
+
+
 #define TEN_SECS 10
 #define FOUR_MINUTES 240
 #define TWENTY_MINUTES 1200
