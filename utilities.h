@@ -66,4 +66,6 @@ bool findAddress(MacAddress *address, queue *list);
 
 MacAddress *createAddress(char *address, MacAddress *macAddress);
 
+void saveCloseAddresses(queue *list);
+
 #endif

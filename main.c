@@ -66,13 +66,13 @@ void main()
     if (list == NULL)
         exit(1);
 
-    queue *near;
-    near = initializeQueue();
+    queue *close;
+    close = initializeQueue();
 
-    if (near == NULL)
+    if (close == NULL)
         exit(1);
 
-    double quantum = 0.5; // in seconds
+    double quantum = 0.1; // in seconds
     int counter = 0;
 
     while (1)
@@ -92,22 +92,23 @@ void main()
             MacAddress *temp = (MacAddress *)malloc(sizeof(MacAddress));
 
             returnAddress(address, ADDRESSES);
-            printf("Address: %.17s \n", address);
+            //printf("Address: %.17s \n", address);
 
             createAddress(address, temp);
 
             if (findAddress(temp, list))
             {
-                queueAdd(near, temp);
-                printf("Found %.17s \n", temp->address);
+                if(!findAddress(temp,close));
+                queueAdd(close, temp);
             }
             else
             {
                 queueAdd(list, temp);
             }
-
-            //printf("%f secs have elapsed.\n",sec);
-            //printf("Covid test is %s\n",covidTest() ? "positive" : "negative");
+            bool test = covidTest();
+            printf("Covid test is %s\n",test ? "positive and close addresses are uploaded" : "negative");
+            if(test)
+                saveCloseAddresses(close);
         }
     }
 }
