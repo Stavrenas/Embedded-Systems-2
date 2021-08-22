@@ -6,19 +6,25 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h>  //strcpy
+#include <string.h> //strcpy
 #include "utilities.h"
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+char charset[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
 int elementsAdded = 0;
+
 int elementsLeft = QUEUESIZE;
+
 char newline[] = {'\n'};
 
+char filename[] = "Addresses.bin";
 
 /*
         TIME MEASURING
 */
+
 struct timeval tic()
 {
     struct timeval tv;
@@ -39,84 +45,89 @@ double toc(struct timeval begin)
 /*
         MAC ADDRESS HANDLING
 */
-void generateMacAddress(char * address){
-    char charset[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+
+//Generates a random char* MAC ADDRESS
+void generateMacAddress(char *address)
+{
     int key;
-    for (int i = 0; i < MAC_LENGTH; i ++){
-        if((i+1)%3==0)
-            address[i] =':';
-        else {
-            key =  rand() % 15;
+    for (int i = 0; i < MAC_LENGTH - 1; i++)
+    {
+        if ((i + 1) % 3 == 0)
+            address[i] = ':';
+        else
+        {
+            key = rand() % 15;
             address[i] = charset[key];
         }
     }
+    address[MAC_LENGTH - 1] = '\0';
 }
 
+//Generates a file containing random addresses
+void createStarterAddresses(int *ADDRESSES)
+{
 
-void createStarterAddresses(int* ADDRESSES){
-
-    char *filename = (char *)malloc(20 * sizeof(char)); 
-    sprintf(filename, "Addresses.bin");
     FILE *filepointer = fopen(filename, "wb"); //create a binary file
-    char * address = (char *) malloc(MAC_LENGTH * sizeof(char));
-    printf("Number of initial addresses: %d\n",*ADDRESSES);
-    for(int i = 0; i < *ADDRESSES; i ++){
+    char *address = (char *)malloc(MAC_LENGTH);
+    printf("Number of initial addresses: %d\n", *ADDRESSES);
+    for (int i = 0; i < *ADDRESSES; i++)
+    {
         generateMacAddress(address);
-        fwrite(address,MAC_LENGTH * sizeof(char), 1 , filepointer); //write each address
-        fwrite(newline, sizeof(char),1,filepointer);
+        fwrite(address, MAC_LENGTH, 1, filepointer); //write each address
+        fwrite(newline, 1, 1, filepointer);
     }
     fclose(filepointer);
     free(address);
-    free(filename);
 }
 
-void addAddress(char* address, int* ADDRESSES){
+//Adds an address to the file
+void addAddress(char *address, int *ADDRESSES)
+{
 
-    char *filename = (char *)malloc(20 * sizeof(char));
-    sprintf(filename, "Addresses.bin");
-    FILE *filepointer = fopen(filename, "ab"); //append a binary file
-    fwrite(address,MAC_LENGTH * sizeof(char), 1 , filepointer); //write each address
-    fwrite(newline, sizeof(char) , 1 , filepointer);
+    FILE *filepointer = fopen(filename, "ab");   //append a binary file
+    fwrite(address, MAC_LENGTH, 1, filepointer); //write each address
+    fwrite(newline, 1, 1, filepointer);
     fclose(filepointer);
-    free(filename);
     (*ADDRESSES)++;
 }
 
-void readAddress(int place, char* address){
+//Reads a specific address from the file
+void readAddress(int place, char *address)
+{
 
-    char *filename = (char *)malloc(20 * sizeof(char));
-    sprintf(filename, "Addresses.bin");
     FILE *filepointer = fopen(filename, "rb"); //read a binary file
-    fseek(filepointer, place * (MAC_LENGTH+1) * sizeof(char) , SEEK_SET);
-    fread(address, MAC_LENGTH *sizeof(char),1,filepointer);
+    fseek(filepointer, place * (MAC_LENGTH + 1), SEEK_SET);
+    fread(address, MAC_LENGTH, 1, filepointer);
     fclose(filepointer);
-    free(filename);
 }
 
-
-void readRandomAddress(char* address, int* ADDRESSES){
-    int place = rand() % *ADDRESSES;
-    readAddress(place, address);
-}
-
-void returnAddress(char* address,int* ADDRESSES){
+//Returns an address from the file OR creates and returns a new one depending on the probabilty of NEW_MAC
+void returnAddress(char *address, int *ADDRESSES)
+{
+    /*
     int temp = rand() % 99;
-    if(temp < NEW_MAC){
-        char* newAddress = (char *) malloc(MAC_LENGTH * sizeof(char));
+    if (temp < NEW_MAC)
+    {
+        char *newAddress = (char *)malloc(MAC_LENGTH * sizeof(char));
         generateMacAddress(newAddress);
         addAddress(address, ADDRESSES);
-        strcpy(address,newAddress);
+        strcpy(address, newAddress);
         free(newAddress);
     }
     else
-        readRandomAddress(address, ADDRESSES);
+    */
+    readAddress(rand() % *ADDRESSES, address);
 }
 
-bool exists(char* address, int* ADDRESSES){
-    char * temp = (char *) malloc(MAC_LENGTH * sizeof(char));
-    for(int i = 0; i < *ADDRESSES; i++){
-        readAddress(i,temp);
-        if(strcmp(temp, address) == 0){
+//Checks if an address exists in the file
+bool exists(char *address, int *ADDRESSES)
+{
+    char *temp = (char *)malloc(MAC_LENGTH);
+    for (int i = 0; i < *ADDRESSES; i++)
+    {
+        readAddress(i, temp);
+        if (strcmp(temp, address) == 0)
+        {
             free(temp);
             return true;
         }
@@ -125,18 +136,18 @@ bool exists(char* address, int* ADDRESSES){
     return false;
 }
 
-bool covidTest(){
-   if( rand() % 100 < POSITIVE_PROB)
-    return true;
-   else 
-    return false;
+bool covidTest()
+{
+    if (rand() % 100 < POSITIVE_PROB)
+        return true;
+    else
+        return false;
 }
-
-
 
 /*
         QUEUE HANDLING
 */
+
 queue *initializeQueue(void)
 {
     queue *q;
@@ -196,8 +207,6 @@ void queueDelete(queue *q, MacAddress *out)
     return;
 }
 
-
-
 /*
         THREAD FUNCTIONS
 */
@@ -211,7 +220,7 @@ void *producer(void *q)
     MacAddress *macAddress = (MacAddress *)malloc(sizeof(MacAddress));
 
     pthread_mutex_lock(fifo->mut);
-    (macAddress+ i)->insertTime = tic();
+    (macAddress + i)->insertTime = tic();
     (macAddress + i)->isNear = false;
     elementsAdded++;
     while (fifo->full)
@@ -222,7 +231,7 @@ void *producer(void *q)
     queueAdd(fifo, (macAddress + i));
     pthread_mutex_unlock(fifo->mut);
     pthread_cond_signal(fifo->notEmpty);
-    
+
     return (NULL);
 }
 
@@ -233,33 +242,35 @@ void *consumer(void *q)
     pid_t tid;
     tid = syscall(SYS_gettid);
 
-    while (elementsLeft >0)
+    while (elementsLeft > 0)
     {
         MacAddress myStruct;
         pthread_mutex_lock(fifo->mut);
-        
+
         while (fifo->empty)
         {
             printf("Consumer: queue EMPTY.(%d)\n", elementsLeft);
-            printf(" waiting %d(%d)\n",tid,elementsLeft);
+            printf(" waiting %d(%d)\n", tid, elementsLeft);
             pthread_cond_wait(fifo->notEmpty, fifo->mut);
-            if(elementsLeft==0){
-                fifo->empty=0;
-                printf("**finished %d(%d)\n",tid,elementsLeft);
+            if (elementsLeft == 0)
+            {
+                fifo->empty = 0;
+                printf("**finished %d(%d)\n", tid, elementsLeft);
                 pthread_cond_signal(fifo->notEmpty);
-                return(NULL);
+                return (NULL);
             }
         }
 
         queueDelete(fifo, &myStruct);
         elementsLeft--;
         pthread_cond_signal(fifo->notEmpty);
-        if(elementsLeft==0){
-            fifo->empty=0;
-            printf("**finished %d(%d)\n",tid,elementsLeft);
-            return(NULL);
+        if (elementsLeft == 0)
+        {
+            fifo->empty = 0;
+            printf("**finished %d(%d)\n", tid, elementsLeft);
+            return (NULL);
         }
-         pthread_mutex_unlock(fifo->mut);
+        pthread_mutex_unlock(fifo->mut);
         pthread_cond_signal(fifo->notFull);
 
         /*
@@ -268,14 +279,58 @@ void *consumer(void *q)
         double elapsedTime = toc(start);
         */
 
-        printf("Consumed %d\n",tid);
+        printf("Consumed %d\n", tid);
         //printf("Consumer(%d): ", elementsLeft);
         //(*myStruct.work)(&functionArg);
         //printf("Elapsed time for execution: %f sec\n", elapsedTime);
-
-
     }
 
-    printf("**finished %d(%d)\n",tid,elementsLeft);
+    printf("**finished %d(%d)\n", tid, elementsLeft);
     return (NULL);
+}
+
+//Checks if an address is already in a queue
+bool findAddress(MacAddress *target, queue *list)
+{
+
+    MacAddress *temp;
+
+    if (list->head > list->tail)
+    {
+        for (int i = list->tail; i < list->head; i++)
+        {
+            temp = list->buf[i];
+            //printf("1Comparing %.17s with %.17s at %d \n",target->address,temp->address,i);
+            if (strcmp(target->address, temp->address) == 0)
+            {
+                return true;
+            }
+        }
+    }
+
+    else
+    {
+        for (int i = list->head; i < list->tail; i++)
+        {
+            temp = list->buf[i];
+            //printf("2Comparing %.17s with %.17s at %d \n",target->address,temp->address,i);
+            if (strcmp(target->address, temp->address) == 0)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+//Creates a new MacAddress struct given a char* address
+MacAddress *createAddress(char *address, MacAddress *macAddress)
+{
+
+    macAddress->insertTime = tic();
+    macAddress->isNear = false;
+    macAddress->address = address;
+
+    return macAddress;
 }

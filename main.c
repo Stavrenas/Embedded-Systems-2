@@ -1,6 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
-#include <string.h>  //strcpy
+#include <string.h> //strcpy
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
@@ -10,12 +10,22 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include "utilities.h"
- 
+
 #define P 1
-#define Q 4
+#define Q 1
 
+/*
 
-void main(){
+*New search every 10secs
+
+*If we find the same MAC in 4-20min it is considered "close" and remebered for 14days. Else it is disgarded
+
+*Every 4 hours we conduct a covid test. If positive, upload close contacts
+
+*/
+
+void main()
+{
     srand(time(NULL));
 
     /*
@@ -32,14 +42,10 @@ void main(){
     printf("Deleted queue\n");
     
     */
-   
-    int* ADDRESSES =(int*)malloc(sizeof(int));
-    *ADDRESSES = 1000;
+
+    int *ADDRESSES = (int *)malloc(sizeof(int));
+    *ADDRESSES = 20;
     createStarterAddresses(ADDRESSES);
-    char * address = (char *) malloc(MAC_LENGTH * sizeof(char));
-    
-    double quantum = 0.1; // in seconds
-    int counter = 0;
 
     struct timeval start_1sec = tic();
     double end_1sec;
@@ -53,43 +59,55 @@ void main(){
     double end_4hours;
     struct timeval start_14days = tic();
     double end_14days;
-    
-    
-    queue *fifo;
-    fifo = initializeQueue();
-    
-    if (fifo == NULL)
+
+    queue *list;
+    list = initializeQueue();
+
+    if (list == NULL)
         exit(1);
-    
+
+    queue *near;
+    near = initializeQueue();
+
+    if (near == NULL)
+        exit(1);
+
+    double quantum = 0.5; // in seconds
+    int counter = 0;
 
     while (1)
     {
         end_10secs = toc(start_10secs);
-        if(end_10secs > quantum ){
-            start_10secs=tic();
-
-        MacAddress *macAddress = (MacAddress *)malloc( sizeof(MacAddress));
-
-        returnAddress(address, ADDRESSES);
-
-        macAddress->insertTime = tic();
-        macAddress->isNear = false;
-        macAddress->address = address;
-
-        while (fifo->full)
+        if (end_10secs > quantum)
         {
-            //printf("Producer: queue FULL.\n");
-            //pthread_cond_wait(fifo->notFull, fifo->mut);
-        }
 
-        queueAdd(fifo, macAddress);
+            start_10secs = tic();
+
+            while (list->full)
+            {
+                //printf("Producer: queue FULL.\n");
+                //pthread_cond_wait(list->notFull, list->mut);
+            }
+            char *address = (char *)malloc(MAC_LENGTH);
+            MacAddress *temp = (MacAddress *)malloc(sizeof(MacAddress));
+
+            returnAddress(address, ADDRESSES);
+            printf("Address: %.17s \n", address);
+
+            createAddress(address, temp);
+
+            if (findAddress(temp, list))
+            {
+                queueAdd(near, temp);
+                printf("Found %.17s \n", temp->address);
+            }
+            else
+            {
+                queueAdd(list, temp);
+            }
 
             //printf("%f secs have elapsed.\n",sec);
             //printf("Covid test is %s\n",covidTest() ? "positive" : "negative");
-            
-        //printf("Addresses: %d\n",*ADDRESSES);
         }
-    
     }
 }
-

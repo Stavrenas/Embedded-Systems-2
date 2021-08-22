@@ -5,10 +5,9 @@
 #include <sys/time.h>
 
 #define QUEUESIZE 120
-#define POSITIVE_PROB 2     //Probability of the test being positive (%) 
-#define NEW_MAC 25         //Probability of a new mac address being added (%) 
-#define MAC_LENGTH 17
-
+#define POSITIVE_PROB 2 //Probability of the test being positive (%)
+#define NEW_MAC 0       //Probability of a new mac address being added (%)
+#define MAC_LENGTH 18
 
 #define TEN_SECS 10
 #define FOUR_MINUTES 240
@@ -16,11 +15,12 @@
 #define FOUR_HOURS 14400
 #define FOURTEEN_DAYS 1209600
 
-typedef struct  {
-    char* address;
+typedef struct
+{
+    char *address;
     void *(*generate)(void *);
     struct timeval insertTime;
-    bool isNear;   
+    bool isNear;
 } MacAddress;
 
 typedef struct
@@ -48,20 +48,22 @@ void *producer(void *args);
 
 void *consumer(void *args);
 
-void generateMacAddress(char * address);
+void generateMacAddress(char *address);
 
-void createStarterAddresses(int* ADDRESSES);
+void createStarterAddresses(int *ADDRESSES);
 
-void addAddress(char* address, int* ADDRESSES);
+void addAddress(char *address, int *ADDRESSES);
 
 bool covidTest();
 
-void readAddress(int place, char* address);
+void readAddress(int place, char *address);
 
-void readRandomAddress(char* address, int* ADDRESSES);
+void returnAddress(char *address, int *ADDRESSES);
 
-void returnAddress(char* address,int* ADDRESSES);
+bool exists(char *address, int *ADDRESSES);
 
-bool exists(char* address, int* ADDRESSES);
+bool findAddress(MacAddress *address, queue *list);
+
+MacAddress *createAddress(char *address, MacAddress *macAddress);
 
 #endif
