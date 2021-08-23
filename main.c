@@ -16,7 +16,7 @@
 
 /*
 
-*New search every 10secs
+*New search every 10secs    CHECK
 
 *If we find the same MAC in 4-20min it is considered "close" and remebered for 14days. Else it is disgarded
 
@@ -44,20 +44,20 @@ void main()
     */
 
     int *ADDRESSES = (int *)malloc(sizeof(int));
-    *ADDRESSES = 20;
+    *ADDRESSES = 200;
     createStarterAddresses(ADDRESSES);
 
     struct timeval start_1sec = tic();
     double end_1sec;
     struct timeval start_10secs = tic();
     double end_10secs;
-    struct timeval start_4minutes = tic();
+    struct timeval start_4minutes;
     double end_4minutes;
-    struct timeval start_20minutes = tic();
+    struct timeval start_20minutes;
     double end_20minutes;
-    struct timeval start_4hours = tic();
+    struct timeval start_4hours;
     double end_4hours;
-    struct timeval start_14days = tic();
+    struct timeval start_14days;
     double end_14days;
 
     queue *list;
@@ -72,17 +72,17 @@ void main()
     if (close == NULL)
         exit(1);
 
-    double quantum = 0.1; // in seconds
+    double quantum = 0.01; // in seconds
     int counter = 0;
 
     while (1)
     {
+        end_4hours = toc(start_4hours);
         end_10secs = toc(start_10secs);
-        if (end_10secs > quantum)
+
+        if (end_10secs > quantum * TEN_SECS)
         {
-
             start_10secs = tic();
-
             while (list->full)
             {
                 //printf("Producer: queue FULL.\n");
@@ -95,20 +95,47 @@ void main()
             //printf("Address: %.17s \n", address);
 
             createAddress(address, temp);
+            temp->insertTime = tic();
+            temp->isNear = false;
+            temp->isOld = false;
 
-            if (findAddress(temp, list))
+            if (isNear(temp, list))
             {
-                if(!findAddress(temp,close));
-                queueAdd(close, temp);
+                if (!findAddress(temp, close))
+                    queueAdd(close, temp);
+                start_14days = tic();
             }
             else
-            {
                 queueAdd(list, temp);
-            }
+
+            removeOld(list);
+        }
+
+        if (end_4hours > quantum * 20)
+        {
+            start_4hours = tic();
+            end_14days = toc(start_14days);
             bool test = covidTest();
-            printf("Covid test is %s\n",test ? "positive and close addresses are uploaded" : "negative");
-            if(test)
+            time_t t;
+            t = time(NULL);
+            struct tm tm;
+            tm = *localtime(&t);
+            printf("Covid test is %s", test ? "positive and close addresses are uploaded " : "negative\n");
+
+            if (test)
+            {
+                printf("at %d-%d-%d %d:%d:%d \n", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
                 saveCloseAddresses(close);
+            }
+
+            if (end_14days > quantum * FOURTEEN_DAYS)
+            {
+                deleteQueue(close);
+                queue *close;
+                close = initializeQueue();
+                if (close == NULL)
+                    exit(1);
+            }
         }
     }
 }

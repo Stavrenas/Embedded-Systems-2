@@ -20,7 +20,6 @@ int elementsLeft = QUEUESIZE;
 char newline[] = {'\n'};
 
 char filename[] = "Addresses.bin";
-char filenameClose[] = "Close.bin";
 
 /*
         TIME MEASURING
@@ -122,6 +121,11 @@ void returnAddress(char *address, int *ADDRESSES)
 
 void saveCloseAddresses(queue *list)
 {
+    time_t t;
+    t = time(NULL);
+    struct tm tm = *localtime(&t);
+    char *filenameClose = (char *)malloc(strlen("Close.bin") + 40);
+    sprintf(filenameClose, "Close_%d_%d_%d_%d:%d:%d.bin", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
     FILE *filepointer = fopen(filenameClose, "wb"); //create a binary file
     char *temp = (char *)malloc(MAC_LENGTH);
     if (list->head > list->tail)
@@ -129,10 +133,9 @@ void saveCloseAddresses(queue *list)
         for (int i = list->tail; i < list->head; i++)
         {
             temp = list->buf[i]->address;
-            fwrite(temp, MAC_LENGTH, 1, filepointer); //write each address
+            fwrite(temp, MAC_LENGTH - 1, 1, filepointer); //write each address
             fwrite(newline, 1, 1, filepointer);
-            printf("Saved %s \n",temp);
-
+            printf("Saved %s \n", temp);
         }
     }
 
@@ -141,14 +144,24 @@ void saveCloseAddresses(queue *list)
         for (int i = list->head; i < list->tail; i++)
         {
             temp = list->buf[i]->address;
-            fwrite(temp, MAC_LENGTH, 1, filepointer); //write each address
+            fwrite(temp, MAC_LENGTH - 1, 1, filepointer); //write each address
             fwrite(newline, 1, 1, filepointer);
-            printf("Saved %s \n",temp);
-
+            printf("Saved %s \n", temp);
         }
     }
 
-  fclose(filepointer);
+    fclose(filepointer);
+}
+
+//Checks if an address is considered "near"
+bool isNear(MacAddress *target, queue *list)
+{
+    if (findAddress(target, list))
+    {
+        if (toc(target->insertTime) > FOUR_MINUTES * 0 && toc(target->insertTime) < TWENTY_MINUTES)
+            return true;
+    }
+    return false;
 }
 
 //Checks if an address is already in a queue
@@ -162,10 +175,8 @@ bool findAddress(MacAddress *target, queue *list)
             temp = list->buf[i];
             //printf("1Comparing %s with %s at %d \n",target->address,temp->address,i);
             if (strcmp(target->address, temp->address) == 0)
-            {
-                printf("found\n");
                 return true;
-            }
+            
         }
     }
 
@@ -174,18 +185,22 @@ bool findAddress(MacAddress *target, queue *list)
         for (int i = list->head; i < list->tail; i++)
         {
             temp = list->buf[i];
-            //
-            
-            printf("2Comparing %s with %s at %d \n",target->address,temp->address,i);
+            //printf("2Comparing %s with %s at %d \n",target->address,temp->address,i);
             if (strcmp(target->address, temp->address) == 0)
-            {
-                printf("found\n");
                 return true;
-            }
+            
         }
     }
 
     return false;
+}
+
+void removeOld(queue *list)
+{
+    MacAddress *temp;
+    //printf("Time in queue %f \n",toc(list->buf[list->head]->insertTime));
+    if (toc(list->buf[list->head]->insertTime) > TWENTY_MINUTES)
+        queueDelete(list, temp);
 }
 
 //Creates a new MacAddress struct given a char* address
@@ -197,7 +212,6 @@ MacAddress *createAddress(char *address, MacAddress *macAddress)
 
     return macAddress;
 }
-
 
 //Checks if an address exists in the file
 bool exists(char *address, int *ADDRESSES)
@@ -368,4 +382,3 @@ void *consumer(void *q)
     printf("**finished %d(%d)\n", tid, elementsLeft);
     return (NULL);
 }
-

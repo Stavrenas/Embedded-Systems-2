@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <sys/time.h>
 
-#define QUEUESIZE 120
-#define POSITIVE_PROB 2 //Probability of the test being positive (%)
+#define QUEUESIZE 200
+#define POSITIVE_PROB 10 //Probability of the test being positive (%)
 #define NEW_MAC 0       //Probability of a new mac address being added (%)
 #define MAC_LENGTH 18
 
@@ -20,7 +20,7 @@ typedef struct
     char *address;
     void *(*generate)(void *);
     struct timeval insertTime;
-    bool isNear;
+    bool isNear,isOld;
 } MacAddress;
 
 typedef struct
@@ -62,10 +62,14 @@ void returnAddress(char *address, int *ADDRESSES);
 
 bool exists(char *address, int *ADDRESSES);
 
+bool isNear(MacAddress *address, queue *list);
+
 bool findAddress(MacAddress *address, queue *list);
 
 MacAddress *createAddress(char *address, MacAddress *macAddress);
 
 void saveCloseAddresses(queue *list);
+
+void removeOld(queue *list);
 
 #endif
