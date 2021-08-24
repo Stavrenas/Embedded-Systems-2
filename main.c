@@ -15,6 +15,7 @@
 #define L 1
 #define U 1
 
+
 void *loader(void *args);
 void *unloader(void *args);
 
@@ -152,16 +153,13 @@ void *loader(void *argument)
 
     struct timeval start_10secs = tic();
     double end_10secs;
-    double quantum = 0.01; // in seconds
-
-    
 
     while (1)
     {
 
         end_10secs = toc(start_10secs);
 
-        if (end_10secs > quantum * TEN_SECS)
+        if (end_10secs > TEN_SECS)
         {
             start_10secs = tic();
             char *address = (char *)malloc(MAC_LENGTH);
@@ -214,7 +212,6 @@ void *unloader(void *argument)
 
     struct timeval start_10secs = tic();
     double end_10secs;
-    double quantum = 0.01; // in seconds
     struct timeval start_4hours = tic();
     double end_4hours;
     double end_14days;
@@ -223,7 +220,7 @@ void *unloader(void *argument)
     {
         end_10secs = toc(start_10secs);
 
-        if (end_10secs > quantum * TEN_SECS)
+        if (end_10secs >  TEN_SECS)
         {
             MacAddress myStruct;
             //pthread_mutex_lock(list->mut);
@@ -233,16 +230,6 @@ void *unloader(void *argument)
                 printf("Consumer: queue EMPTY.\n");
                 //pthread_cond_wait(list->notEmpty, list->mut);
             }
-            /*
-            int functionArg = myArgument->functionArgument;
-            struct timeval start = myArgument->tv;
-            double elapsedTime = toc(start);
-            */
-
-            //printf("Consumed %d\n", tid);
-            //printf("Consumer(%d): ", elementsLeft);
-            //(*myStruct.work)(&functionArg);
-            //printf("Elapsed time for execution: %f sec\n", elapsedTime);
 
             removeOld(list);
 
@@ -250,7 +237,7 @@ void *unloader(void *argument)
             //pthread_cond_signal(list->notFull);
 
             end_4hours = toc(start_4hours);
-            if (end_4hours > quantum * 20)
+            if (end_4hours >  FOUR_HOURS)
             {
                 start_4hours = tic();
                 end_14days = toc(args->start_14days);
@@ -267,7 +254,7 @@ void *unloader(void *argument)
                     saveCloseAddresses(close);
                 }
 
-                if (end_14days > quantum * FOURTEEN_DAYS)
+                if (end_14days >  FOURTEEN_DAYS)
                     resetQueue(close);
             }
         }

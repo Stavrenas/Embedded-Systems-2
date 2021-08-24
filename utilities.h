@@ -8,12 +8,13 @@
 #define POSITIVE_PROB 10 //Probability of the test being positive (%)
 #define NEW_MAC 0       //Probability of a new mac address being added (%)
 #define MAC_LENGTH 18
+#define QUANTUM 0.1
 
-#define TEN_SECS 10
-#define FOUR_MINUTES 240
-#define TWENTY_MINUTES 1200
-#define FOUR_HOURS 14400
-#define FOURTEEN_DAYS 1209600
+const double TEN_SECS = 10 * QUANTUM;
+const double FOUR_MINUTES =  240 * QUANTUM;
+const double TWENTY_MINUTES = 1200 * QUANTUM;
+const double FOUR_HOURS = 14400 * QUANTUM;
+const double FOURTEEN_DAYS  = 1209600 * QUANTUM;
 
 typedef struct
 {
