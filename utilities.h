@@ -8,13 +8,7 @@
 #define POSITIVE_PROB 10 //Probability of the test being positive (%)
 #define NEW_MAC 0       //Probability of a new mac address being added (%)
 #define MAC_LENGTH 18
-#define QUANTUM 0.1
-
-const double TEN_SECS = 10 * QUANTUM;
-const double FOUR_MINUTES =  240 * QUANTUM;
-const double TWENTY_MINUTES = 1200 * QUANTUM;
-const double FOUR_HOURS = 14400 * QUANTUM;
-const double FOURTEEN_DAYS  = 1209600 * QUANTUM;
+#define QUANTUM 0.01
 
 typedef struct
 {
@@ -60,6 +54,8 @@ void generateMacAddress(char *address);
 
 void createStarterAddresses(int *ADDRESSES);
 
+void saveTime(double time);
+
 void addAddress(char *address, int *ADDRESSES);
 
 bool covidTest();
@@ -78,6 +74,6 @@ MacAddress *createAddress(char *address, MacAddress *macAddress);
 
 void saveCloseAddresses(queue *list);
 
-void removeOld(queue *list);
+bool removeOld(queue *list);
 
 #endif

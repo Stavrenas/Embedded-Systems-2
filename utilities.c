@@ -12,14 +12,14 @@
 #include <sys/types.h>
 
 char charset[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-
 int elementsAdded = 0;
-
 int elementsLeft = QUEUESIZE;
-
 char newline[] = {'\n'};
-
 char filename[] = "Addresses.bin";
+
+const double FOUR_MINUTES =  240 * QUANTUM;
+const double TWENTY_MINUTES = 1200 * QUANTUM;
+
 
 /*
         TIME MEASURING
@@ -78,6 +78,13 @@ void createStarterAddresses(int *ADDRESSES)
     }
     fclose(filepointer);
     free(address);
+}
+//Saves the times in a file
+void saveTime(double time){
+
+    FILE *filepointer = fopen("Times.bin", "ab");   //append a binary file
+    fprintf(filepointer, "%f\n",time); //write each address
+    fclose(filepointer);
 }
 
 //Adds an address to the file
@@ -173,7 +180,6 @@ bool findAddress(MacAddress *target, queue *list)
         for (int i = list->tail; i < list->head; i++)
         {
             temp = list->buf[i];
-            //printf("1Comparing %s with %s at %d \n",target->address,temp->address,i);
             if (strcmp(target->address, temp->address) == 0)
                 return true;
             
@@ -185,7 +191,6 @@ bool findAddress(MacAddress *target, queue *list)
         for (int i = list->head; i < list->tail; i++)
         {
             temp = list->buf[i];
-            //printf("2Comparing %s with %s at %d \n",target->address,temp->address,i);
             if (strcmp(target->address, temp->address) == 0)
                 return true;
             
@@ -195,12 +200,14 @@ bool findAddress(MacAddress *target, queue *list)
     return false;
 }
 
-void removeOld(queue *list)
+bool removeOld(queue *list)
 {
-    MacAddress *temp;
-    //printf("Time in queue %f \n",toc(list->buf[list->head]->insertTime));
-    if (toc(list->buf[list->head]->insertTime) > TWENTY_MINUTES)
+    MacAddress *temp = list->buf[list->head];
+    if (toc(temp->insertTime) > TWENTY_MINUTES){
         queueDelete(list, temp);
+        return true;
+    }
+    return false;
 }
 
 //Creates a new MacAddress struct given a char* address

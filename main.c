@@ -19,6 +19,10 @@
 void *loader(void *args);
 void *unloader(void *args);
 
+const double TEN_SECS = 10 * QUANTUM;
+const double FOUR_HOURS = 14400 * QUANTUM;
+const double FOURTEEN_DAYS  = 1209600 * QUANTUM;
+
 /*
 
 *New search every 10secs    CHECK
@@ -36,6 +40,8 @@ void main()
     int *ADDRESSES = (int *)malloc(sizeof(int));
     *ADDRESSES = 200;
     createStarterAddresses(ADDRESSES);
+
+    FILE *filepointer = fopen("Times.bin", "wb"); //create a binary file
 
     struct timeval start_14days;
     double end_14days;
@@ -65,74 +71,6 @@ void main()
     deleteQueue(list);
     deleteQueue(close);
 
-    /*
-    double quantum = 0.01; // in seconds
-    int counter = 0;
-
-    while (1)
-    {
-        end_4hours = toc(start_4hours);
-        end_10secs = toc(start_10secs);
-
-        if (end_10secs > quantum * TEN_SECS)
-        {
-            start_10secs = tic();
-            while (list->full)
-            {
-                //printf("Producer: queue FULL.\n");
-                //pthread_cond_wait(list->notFull, list->mut);
-            }
-            char *address = (char *)malloc(MAC_LENGTH);
-            MacAddress *temp = (MacAddress *)malloc(sizeof(MacAddress));
-
-            returnAddress(address, ADDRESSES);
-            //printf("Address: %.17s \n", address);
-
-            createAddress(address, temp);
-            temp->insertTime = tic();
-            temp->isNear = false;
-            temp->isOld = false;
-
-            if (isNear(temp, list))
-            {
-                if (!findAddress(temp, close))
-                    queueAdd(close, temp);
-                start_14days = tic();
-            }
-            else
-                queueAdd(list, temp);
-
-            removeOld(list);
-        }
-
-        if (end_4hours > quantum * 20)
-        {
-            start_4hours = tic();
-            end_14days = toc(start_14days);
-            bool test = covidTest();
-            time_t t;
-            t = time(NULL);
-            struct tm tm;
-            tm = *localtime(&t);
-            printf("Covid test is %s", test ? "positive and close addresses are uploaded " : "negative\n");
-
-            if (test)
-            {
-                printf("at %d-%d-%d %d:%d:%d \n", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
-                saveCloseAddresses(close);
-            }
-
-            if (end_14days > quantum * FOURTEEN_DAYS)
-            {
-                deleteQueue(close);
-                queue *close;
-                close = initializeQueue();
-                if (close == NULL)
-                    exit(1);
-            }
-        }
-    }
-    */
 }
 
 /*
@@ -141,7 +79,7 @@ void main()
 
 void *loader(void *argument)
 {
-    printf("launched loader\n");
+    //printf("launched loader\n");
 
     loaderStruct *args;
     args = (loaderStruct *)argument;
@@ -149,19 +87,23 @@ void *loader(void *argument)
     queue *list = args->list;
     queue *close = args->close;
 
-    //elementsAdded++;
 
     struct timeval start_10secs = tic();
     double end_10secs;
+
+    struct timeval timer = tic();
+    double time;
 
     while (1)
     {
 
         end_10secs = toc(start_10secs);
-
+        time = toc(timer);
         if (end_10secs > TEN_SECS)
         {
+            saveTime(time);
             start_10secs = tic();
+            
             char *address = (char *)malloc(MAC_LENGTH);
             MacAddress *temp = (MacAddress *)malloc(sizeof(MacAddress));
 
@@ -170,13 +112,12 @@ void *loader(void *argument)
             while (list->full)
             {
                 printf("Producer: queue FULL.\n");
-                //pthread_cond_wait(list->notFull, list->mut);
+                pthread_cond_wait(list->notFull, list->mut);
             }
 
             returnAddress(address, args->ADDRESSES);
-            //printf("Address: %.17s \n", address);
-
             createAddress(address, temp);
+
             temp->insertTime = tic();
             temp->isNear = false;
             temp->isOld = false;
@@ -189,10 +130,12 @@ void *loader(void *argument)
                     args->start_14days = tic();
                 }
             }
-            else
+            else{
                 queueAdd(list, temp);
+                pthread_cond_signal(list->notEmpty);
+            }
             //pthread_mutex_unlock(list->mut);
-            //pthread_cond_signal(list->notEmpty);
+
         }
     }
 
@@ -201,7 +144,8 @@ void *loader(void *argument)
 
 void *unloader(void *argument)
 {
-    printf("launched unloader\n");
+    //printf("launched unloader\n");
+    
     loaderStruct *args;
     args = (loaderStruct *)argument;
 
@@ -224,20 +168,22 @@ void *unloader(void *argument)
         {
             MacAddress myStruct;
             //pthread_mutex_lock(list->mut);
+            start_10secs = tic();
 
             while (list->empty)
             {
                 printf("Consumer: queue EMPTY.\n");
-                //pthread_cond_wait(list->notEmpty, list->mut);
+                pthread_cond_wait(list->notEmpty, list->mut);
             }
 
-            removeOld(list);
+            if(removeOld(list))
+                pthread_cond_signal(list->notFull);
 
             //pthread_mutex_unlock(list->mut);
-            //pthread_cond_signal(list->notFull);
+            
 
             end_4hours = toc(start_4hours);
-            if (end_4hours >  FOUR_HOURS)
+            if (end_4hours >  FOUR_HOURS )
             {
                 start_4hours = tic();
                 end_14days = toc(args->start_14days);
