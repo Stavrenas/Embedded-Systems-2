@@ -264,6 +264,13 @@ queue *initializeQueue(void)
     return (q);
 }
 
+void resetQueue(queue * q){
+    q->empty = 1;
+    q->full = 0;
+    q->head = 0;
+    q->tail = 0;
+}
+
 void deleteQueue(queue *q)
 {
     pthread_mutex_destroy(q->mut);
@@ -301,84 +308,4 @@ void queueDelete(queue *q, MacAddress *out)
     return;
 }
 
-/*
-        THREAD FUNCTIONS
-*/
 
-void *producer(void *q)
-{
-    queue *fifo;
-    int i;
-    fifo = (queue *)q;
-
-    MacAddress *macAddress = (MacAddress *)malloc(sizeof(MacAddress));
-
-    pthread_mutex_lock(fifo->mut);
-    (macAddress + i)->insertTime = tic();
-    (macAddress + i)->isNear = false;
-    elementsAdded++;
-    while (fifo->full)
-    {
-        printf("Producer: queue FULL.\n");
-        pthread_cond_wait(fifo->notFull, fifo->mut);
-    }
-    queueAdd(fifo, (macAddress + i));
-    pthread_mutex_unlock(fifo->mut);
-    pthread_cond_signal(fifo->notEmpty);
-
-    return (NULL);
-}
-
-void *consumer(void *q)
-{
-    queue *fifo;
-    fifo = (queue *)q;
-    pid_t tid;
-    tid = syscall(SYS_gettid);
-
-    while (elementsLeft > 0)
-    {
-        MacAddress myStruct;
-        pthread_mutex_lock(fifo->mut);
-
-        while (fifo->empty)
-        {
-            printf("Consumer: queue EMPTY.(%d)\n", elementsLeft);
-            printf(" waiting %d(%d)\n", tid, elementsLeft);
-            pthread_cond_wait(fifo->notEmpty, fifo->mut);
-            if (elementsLeft == 0)
-            {
-                fifo->empty = 0;
-                printf("**finished %d(%d)\n", tid, elementsLeft);
-                pthread_cond_signal(fifo->notEmpty);
-                return (NULL);
-            }
-        }
-
-        queueDelete(fifo, &myStruct);
-        elementsLeft--;
-        pthread_cond_signal(fifo->notEmpty);
-        if (elementsLeft == 0)
-        {
-            fifo->empty = 0;
-            printf("**finished %d(%d)\n", tid, elementsLeft);
-            return (NULL);
-        }
-        pthread_mutex_unlock(fifo->mut);
-        pthread_cond_signal(fifo->notFull);
-
-        /*
-        int functionArg = myArgument->functionArgument;
-        struct timeval start = myArgument->tv;
-        double elapsedTime = toc(start);
-        */
-
-        printf("Consumed %d\n", tid);
-        //printf("Consumer(%d): ", elementsLeft);
-        //(*myStruct.work)(&functionArg);
-        //printf("Elapsed time for execution: %f sec\n", elapsedTime);
-    }
-
-    printf("**finished %d(%d)\n", tid, elementsLeft);
-    return (NULL);
-}

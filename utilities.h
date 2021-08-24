@@ -32,6 +32,15 @@ typedef struct
     pthread_cond_t *notFull, *notEmpty;
 } queue;
 
+typedef struct
+{
+    int* ADDRESSES;
+    queue* list;
+    queue* close;
+    struct timeval start_14days; 
+
+} loaderStruct;
+
 double toc(struct timeval begin);
 
 struct timeval tic();
@@ -44,9 +53,7 @@ void queueAdd(queue *q, MacAddress *in);
 
 void queueDelete(queue *q, MacAddress *out);
 
-void *producer(void *args);
-
-void *consumer(void *args);
+void resetQueue(queue * q);
 
 void generateMacAddress(char *address);
 
