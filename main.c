@@ -12,9 +12,6 @@
 #include "utilities.h"
 
 #define _GNU_SOURCE
-#define L 1
-#define U 1
-
 
 void *loader(void *args);
 void *unloader(void *args);
