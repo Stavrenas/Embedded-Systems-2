@@ -27,6 +27,8 @@ typedef struct
 typedef struct
 {
     int* ADDRESSES;
+    pthread_cond_t *done_loader,*done_unloader;
+    pthread_mutex_t *mut_loader,*mut_unloader;
     queue* list;
     queue* close;
     struct timeval start_14days; 

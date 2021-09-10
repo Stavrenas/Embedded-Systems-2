@@ -1,7 +1,10 @@
 CC = gcc
 CFLAGS = -lpthread -lm
 
-default: main
+default: v0
 
-main: main.c utilities.c
+v0: v0.c utilities.c
+	$(CC) -o $@ $^ $(CFLAGS)
+
+v1: v1.c utilities.c
 	$(CC) -o $@ $^ $(CFLAGS)
