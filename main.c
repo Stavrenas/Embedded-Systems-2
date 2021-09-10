@@ -25,7 +25,7 @@ void main()
     srand(time(NULL));
 
     int *ADDRESSES = (int *)malloc(sizeof(int));
-    *ADDRESSES = 200;
+    *ADDRESSES = 500;
     createStarterAddresses(ADDRESSES);
 
     FILE *filepointer = fopen("Times.bin", "wb"); //create a binary file

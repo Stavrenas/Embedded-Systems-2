@@ -17,9 +17,8 @@ int elementsLeft = QUEUESIZE;
 char newline[] = {'\n'};
 char filename[] = "Addresses.bin";
 
-const double FOUR_MINUTES =  240 * QUANTUM;
+const double FOUR_MINUTES = 240 * QUANTUM;
 const double TWENTY_MINUTES = 1200 * QUANTUM;
-
 
 /*
         TIME MEASURING
@@ -80,10 +79,11 @@ void createStarterAddresses(int *ADDRESSES)
     free(address);
 }
 //Saves the times in a file
-void saveTime(double time){
+void saveTime(double time)
+{
 
-    FILE *filepointer = fopen("Times.bin", "ab");   //append a binary file
-    fprintf(filepointer, "%f\n",time);              //write each address
+    FILE *filepointer = fopen("Times.bin", "ab"); //append a binary file
+    fprintf(filepointer, "%f\n", time);           //write each address
     fclose(filepointer);
 }
 
@@ -130,7 +130,6 @@ void saveCloseAddresses(queue *list)
             temp = list->buf[i]->address;
             fwrite(temp, MAC_LENGTH - 1, 1, filepointer); //write each address
             fwrite(newline, 1, 1, filepointer);
-            printf("Saved %s \n", temp);
         }
     }
 
@@ -141,7 +140,6 @@ void saveCloseAddresses(queue *list)
             temp = list->buf[i]->address;
             fwrite(temp, MAC_LENGTH - 1, 1, filepointer); //write each address
             fwrite(newline, 1, 1, filepointer);
-            printf("Saved %s \n", temp);
         }
     }
 
@@ -170,7 +168,6 @@ bool findAddress(MacAddress *target, queue *list)
             temp = list->buf[i];
             if (strcmp(target->address, temp->address) == 0)
                 return true;
-            
         }
     }
 
@@ -181,7 +178,6 @@ bool findAddress(MacAddress *target, queue *list)
             temp = list->buf[i];
             if (strcmp(target->address, temp->address) == 0)
                 return true;
-            
         }
     }
 
@@ -191,8 +187,10 @@ bool findAddress(MacAddress *target, queue *list)
 bool removeOld(queue *list)
 {
     MacAddress *temp = list->buf[list->head];
-    if (toc(temp->insertTime) > TWENTY_MINUTES){
+    if (toc(temp->insertTime) > TWENTY_MINUTES)
+    {
         queueDelete(list, temp);
+        free(list->buf[list->head]);
         return true;
     }
     return false;
@@ -258,11 +256,23 @@ queue *initializeQueue(void)
     return (q);
 }
 
-void resetQueue(queue * q){
-    q->empty = 1;
-    q->full = 0;
-    q->head = 0;
-    q->tail = 0;
+void resetQueue(queue *list)
+{
+    if (list->head > list->tail)
+    {
+        for (int i = list->tail; i < list->head; i++)
+            free(list->buf[i]);
+    }
+
+    else
+    {
+        for (int i = list->head; i < list->tail; i++)
+            free(list->buf[i]);
+    }
+    list->empty = 1;
+    list->full = 0;
+    list->head = 0;
+    list->tail = 0;
 }
 
 void deleteQueue(queue *q)
@@ -301,5 +311,3 @@ void queueDelete(queue *q, MacAddress *out)
 
     return;
 }
-
-

@@ -12,7 +12,6 @@
 typedef struct
 {
     char *address;
-    void *(*generate)(void *);
     struct timeval insertTime;
 } MacAddress;
 
