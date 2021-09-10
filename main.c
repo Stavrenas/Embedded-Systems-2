@@ -23,16 +23,6 @@ const double TEN_SECS = 10 * QUANTUM;
 const double FOUR_HOURS = 14400 * QUANTUM;
 const double FOURTEEN_DAYS  = 1209600 * QUANTUM;
 
-/*
-
-*New search every 10secs    CHECK
-
-*If we find the same MAC in 4-20min it is considered "close" and remebered for 14days. Else it is disgarded
-
-*Every 4 hours we conduct a covid test. If positive, upload close contacts
-
-*/
-
 void main()
 {
     srand(time(NULL));
@@ -79,7 +69,6 @@ void main()
 
 void *loader(void *argument)
 {
-    //printf("launched loader\n");
 
     loaderStruct *args;
     args = (loaderStruct *)argument;
@@ -89,24 +78,20 @@ void *loader(void *argument)
 
 
     struct timeval start_10secs = tic();
-    double end_10secs;
-
     struct timeval timer = tic();
-    double time;
 
     while (1)
     {
         
         if (toc(start_10secs) > TEN_SECS)
         {
-            time = toc(timer);
-            saveTime(time);
+
+            saveTime(toc(timer));
             start_10secs = tic();
             
             char *address = (char *)malloc(MAC_LENGTH);
             MacAddress *temp = (MacAddress *)malloc(sizeof(MacAddress));
 
-            //pthread_mutex_lock(list->mut);
 
             while (list->full)
             {
@@ -118,8 +103,6 @@ void *loader(void *argument)
             createAddress(address, temp);
 
             temp->insertTime = tic();
-            temp->isNear = false;
-            temp->isOld = false;
 
             if (isNear(temp, list))
             {
@@ -133,7 +116,6 @@ void *loader(void *argument)
                 queueAdd(list, temp);
                 pthread_cond_signal(list->notEmpty);
             }
-            //pthread_mutex_unlock(list->mut);
 
         }
     }
@@ -143,30 +125,24 @@ void *loader(void *argument)
 
 void *unloader(void *argument)
 {
-    //printf("launched unloader\n");
     
     loaderStruct *args;
     args = (loaderStruct *)argument;
 
     queue *list = args->list;
     queue *close = args->close;
-    pid_t tid;
-    tid = syscall(SYS_gettid);
 
     struct timeval start_10secs = tic();
-    double end_10secs;
     struct timeval start_4hours = tic();
-    double end_4hours;
+
     double end_14days;
 
     while (1)
     {
-        end_10secs = toc(start_10secs);
-
-        if (end_10secs >  TEN_SECS)
+        
+        if (toc(start_10secs) >  TEN_SECS)
         {
             MacAddress myStruct;
-            //pthread_mutex_lock(list->mut);
             start_10secs = tic();
 
             while (list->empty)
@@ -178,11 +154,7 @@ void *unloader(void *argument)
             if(removeOld(list))
                 pthread_cond_signal(list->notFull);
 
-            //pthread_mutex_unlock(list->mut);
-            
-
-            end_4hours = toc(start_4hours);
-            if (end_4hours >  FOUR_HOURS )
+            if (toc(start_4hours) >  FOUR_HOURS )
             {
                 start_4hours = tic();
                 end_14days = toc(args->start_14days);

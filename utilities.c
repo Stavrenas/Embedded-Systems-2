@@ -83,7 +83,7 @@ void createStarterAddresses(int *ADDRESSES)
 void saveTime(double time){
 
     FILE *filepointer = fopen("Times.bin", "ab");   //append a binary file
-    fprintf(filepointer, "%f\n",time); //write each address
+    fprintf(filepointer, "%f\n",time);              //write each address
     fclose(filepointer);
 }
 
@@ -111,18 +111,6 @@ void readAddress(int place, char *address)
 //Returns an address from the file OR creates and returns a new one depending on the probabilty of NEW_MAC
 void returnAddress(char *address, int *ADDRESSES)
 {
-    /*
-    int temp = rand() % 99;
-    if (temp < NEW_MAC)
-    {
-        char *newAddress = (char *)malloc(MAC_LENGTH * sizeof(char));
-        generateMacAddress(newAddress);
-        addAddress(address, ADDRESSES);
-        strcpy(address, newAddress);
-        free(newAddress);
-    }
-    else
-    */
     readAddress(rand() % *ADDRESSES, address);
 }
 
@@ -214,7 +202,6 @@ bool removeOld(queue *list)
 MacAddress *createAddress(char *address, MacAddress *macAddress)
 {
     macAddress->insertTime = tic();
-    macAddress->isNear = false;
     macAddress->address = address;
 
     return macAddress;
