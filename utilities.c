@@ -190,7 +190,7 @@ bool removeOld(queue *list)
     if (toc(temp->insertTime) > TWENTY_MINUTES)
     {
         queueDelete(list, temp);
-        free(list->buf[list->head]);
+        //free(list->buf[list->head]);
         return true;
     }
     return false;
