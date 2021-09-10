@@ -1,0 +1,5 @@
+*.bin
+*.zip
+measurements/
+.vscode/
+main
