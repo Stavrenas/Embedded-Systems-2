@@ -1,4 +1,4 @@
 *.bin
 *.zip
-/measurements
+measurements/
 main
