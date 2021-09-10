@@ -5,7 +5,7 @@
 #include <sys/time.h>
 
 #define QUEUESIZE 200
-#define POSITIVE_PROB 10 //Probability of the test being positive (%)
+#define POSITIVE_PROB 50 //Probability of the test being positive (%)
 #define NEW_MAC 0       //Probability of a new mac address being added (%)
 #define MAC_LENGTH 18
 #define QUANTUM 0.01

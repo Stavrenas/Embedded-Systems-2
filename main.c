@@ -96,11 +96,10 @@ void *loader(void *argument)
 
     while (1)
     {
-
-        end_10secs = toc(start_10secs);
-        time = toc(timer);
-        if (end_10secs > TEN_SECS)
+        
+        if (toc(start_10secs) > TEN_SECS)
         {
+            time = toc(timer);
             saveTime(time);
             start_10secs = tic();
             
