@@ -51,6 +51,7 @@ void main()
     strct.ADDRESSES = ADDRESSES;
     strct.start_14days = start_14days;
 
+    //pthead conditions and mutexes to be used by the threads for timing purposes
     pthread_cond_t *done_loader = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
     pthread_cond_t *done_unloader = (pthread_cond_t *)malloc(sizeof(pthread_cond_t));
     pthread_mutex_t *mut_loader = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
@@ -100,41 +101,39 @@ void *loader(void *argument)
 
     while (1)
     {
-
+        //wait 10 seconds to receive the signal
         pthread_cond_wait(args->done_loader, args->mut_loader);
-        if (1)
+
+        //the rest of the code is the same as in v0.c
+        saveTime(toc(timer));
+
+        char *address = (char *)malloc(MAC_LENGTH);
+        MacAddress *temp = (MacAddress *)malloc(sizeof(MacAddress));
+
+        while (list->full)
         {
-            saveTime(toc(timer));
-            
-            char *address = (char *)malloc(MAC_LENGTH);
-            MacAddress *temp = (MacAddress *)malloc(sizeof(MacAddress));
-
-            while (list->full)
-            {
-                printf("Producer: queue FULL.\n");
-                pthread_cond_wait(list->notFull, list->mut);
-            }
-
-            returnAddress(address, args->ADDRESSES);
-            createAddress(address, temp);
-
-            temp->insertTime = tic();
-
-            if (isNear(temp, list))
-            {
-                if (!findAddress(temp, close))
-                {
-                    queueAdd(close, temp);
-                    args->start_14days = tic();
-                }
-            }
-            else
-            {
-                queueAdd(list, temp);
-                pthread_cond_signal(list->notEmpty);
-            }
+            printf("Producer: queue FULL.\n");
+            pthread_cond_wait(list->notFull, list->mut);
         }
 
+        returnAddress(address, args->ADDRESSES);
+        createAddress(address, temp);
+
+        temp->insertTime = tic();
+
+        if (isNear(temp, list))
+        {
+            if (!findAddress(temp, close))
+            {
+                queueAdd(close, temp);
+                args->start_14days = tic();
+            }
+        }
+        else
+        {
+            queueAdd(list, temp);
+            pthread_cond_signal(list->notEmpty);
+        }
     }
 
     return (NULL);
@@ -156,42 +155,39 @@ void *unloader(void *argument)
 
     while (1)
     {
+        //wait 10 seconds to receive the signal
         pthread_cond_wait(args->done_unloader, args->mut_unloader);
-        if (1)
+        //the rest of the code is the same as in v0.c
+        MacAddress myStruct;
+        while (list->empty)
         {
-            MacAddress myStruct;
-            while (list->empty)
-            {
-                printf("Consumer: queue EMPTY.\n");
-                pthread_cond_wait(list->notEmpty, list->mut);
-            }
-
-            if (removeOld(list))
-                pthread_cond_signal(list->notFull);
-
-            if (toc(start_4hours) > FOUR_HOURS)
-            {
-                start_4hours = tic();
-                end_14days = toc(args->start_14days);
-                bool test = covidTest();
-                time_t t;
-                t = time(NULL);
-                struct tm tm;
-                tm = *localtime(&t);
-                printf("Covid test is %s", test ? "positive and close addresses are uploaded " : "negative\n");
-
-                if (test)
-                {
-                    printf("at %d-%d-%d %d:%d:%d \n", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
-                    saveCloseAddresses(close);
-                }
-
-                if (end_14days > FOURTEEN_DAYS)
-                    resetQueue(close);
-
-            }
+            printf("Consumer: queue EMPTY.\n");
+            pthread_cond_wait(list->notEmpty, list->mut);
         }
 
+        if (removeOld(list))
+            pthread_cond_signal(list->notFull);
+
+        if (toc(start_4hours) > FOUR_HOURS)
+        {
+            start_4hours = tic();
+            end_14days = toc(args->start_14days);
+            bool test = covidTest();
+            time_t t;
+            t = time(NULL);
+            struct tm tm;
+            tm = *localtime(&t);
+            printf("Covid test is %s", test ? "positive and close addresses are uploaded " : "negative\n");
+
+            if (test)
+            {
+                printf("at %d-%d-%d %d:%d:%d \n", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+                saveCloseAddresses(close);
+            }
+
+            if (end_14days > FOURTEEN_DAYS)
+                resetQueue(close);
+        }
     }
     return (NULL);
 }
@@ -205,6 +201,7 @@ void *timer(void *argument)
     {
         usleep(TEN_SECS * 1000000); //in microseconds
 
+        //signal loader and unloader threads
         pthread_cond_signal(args->done_loader);
         pthread_cond_signal(args->done_unloader);
     }
